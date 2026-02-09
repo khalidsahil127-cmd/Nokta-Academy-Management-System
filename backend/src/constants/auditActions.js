@@ -1,0 +1,10 @@
+// src/constants/auditActions.js
+
+module.exports = {
+  USER_CREATE: "USER_CREATE",
+  USER_UPDATE: "USER_UPDATE",
+  USER_DEACTIVATE: "USER_DEACTIVATE",
+  USER_DELETE: "USER_DELETE",
+  LOGIN: "LOGIN",
+  FAILED_ACCESS: "FAILED_ACCESS" 
+};
