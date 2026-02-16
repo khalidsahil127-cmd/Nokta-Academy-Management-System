@@ -1,13 +1,8 @@
 const jwt = require("jsonwebtoken");
 const AppError = require("../../utils/app.error.js");
 const User = require("../../models/Core/User.Model.js");
-const  env  = require("../../config/env.js");
-const AuditService = require("../audit/audit.service");
-
-require("../../models/Core/Role.Model.js");
-require("../../models/Core/Permission.Model.js");
-
-
+const env = require("../../config/env.js");
+const AuditService = require("../audit/audit.service.js");
 
 exports.protect = () => {
   return async (req, res, next) => {
@@ -20,9 +15,6 @@ exports.protect = () => {
       }
 
       const token = authHeader.split(" ")[1];
-      console.log("TOKEN:", token);
-      console.log("JWT SECRET:", env.jwt.accessSecret);
-
       let decoded;
       try {
         decoded = jwt.verify(token, env.jwt.accessSecret);
@@ -31,15 +23,9 @@ exports.protect = () => {
         return next(new AppError("Unauthorized: Invalid token", 401));
       }
 
-      const user = await User.findById(decoded.sub)
-        .populate({
-          path: "role",
-          populate: { path: "permissions" }
-        });
-
+      const user = await User.findById(decoded.sub).populate("role");
       if (!user) return next(new AppError("User not found", 404));
 
-      // بررسی وضعیت کاربر با فیلدهای واقعی
       if (user.deletedAt) return next(new AppError("Account deleted", 403));
       if (user.isSuspended) return next(new AppError("Account suspended", 403));
       if (!user.isActive) return next(new AppError("Account inactive", 403));
@@ -48,7 +34,7 @@ exports.protect = () => {
       next();
     } catch (err) {
       console.error("Auth middleware error:", err);
-      next(new AppError("Unauthorized", 401));
+      return next(new AppError("Unauthorized", 401));
     }
   };
 };

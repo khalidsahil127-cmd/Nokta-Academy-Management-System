@@ -1,31 +1,64 @@
 // src/models/plugins/softDelete.plugin.js
+
 module.exports = function softDeletePlugin(schema) {
+  // اضافه کردن فیلد deletedAt به schema
   schema.add({
-    deletedAt: { type: Date, default: null }
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   });
 
-  schema.index({ deletedAt: 1 });
+  // ===== هوک‌های کوئری (بدون next) =====
+  schema.pre("find", function () {
+    this.where({ deletedAt: null });
+  });
 
-  const excludeDeleted = function () {
-    if (!this.getQuery().withDeleted) {
-      this.where({ deletedAt: null });
-    }
+  schema.pre("findOne", function () {
+    this.where({ deletedAt: null });
+  });
+
+  schema.pre("findOneAndUpdate", function () {
+    this.where({ deletedAt: null });
+  });
+
+  schema.pre("updateOne", function () {
+    this.where({ deletedAt: null });
+  });
+
+  schema.pre("updateMany", function () {
+    this.where({ deletedAt: null });
+  });
+
+  schema.pre("countDocuments", function () {
+    this.where({ deletedAt: null });
+  });
+
+  // ===== CUSTOM METHODS =====
+  schema.methods.softDelete = async function () {
+    this.deletedAt = new Date();
+    return this.save();
   };
 
-  schema.pre("find", excludeDeleted);
-  schema.pre("findOne", excludeDeleted);
-  schema.pre("findOneAndUpdate", excludeDeleted);
-  schema.pre("countDocuments", excludeDeleted);
-
-  schema.statics.softDeleteById = function (id) {
-    return this.findByIdAndUpdate(id, { deletedAt: new Date() });
+  schema.methods.restore = async function () {
+    this.deletedAt = null;
+    return this.save();
   };
 
-  schema.statics.restoreById = function (id) {
-    return this.findByIdAndUpdate(id, { deletedAt: null });
+  schema.methods.isDeleted = function () {
+    return this.deletedAt !== null;
   };
 
-  schema.statics.findWithDeleted = function (filter = {}) {
-    return this.find({ ...filter, withDeleted: true });
+  // ===== STATIC METHODS =====
+  schema.statics.findDeleted = function () {
+    return this.find({ deletedAt: { $ne: null } });
+  };
+
+  schema.statics.findAllWithDeleted = function () {
+    return this.find({});
+  };
+
+  schema.statics.hardDelete = function (conditions) {
+    return this.deleteMany(conditions);
   };
 };

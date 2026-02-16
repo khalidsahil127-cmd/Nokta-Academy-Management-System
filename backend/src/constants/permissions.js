@@ -1,4 +1,4 @@
-// constants/permissions.js
+// src/constants/permissions.js
 module.exports = {
   // User
   CREATE_USER: "CREATE_USER",
